@@ -707,7 +707,7 @@ export class YouTubeSubtitleList {
 
     // LingoFlow 官方链接
     const brandLink = document.createElement("a");
-    brandLink.href = "https://getlingoflow.com/";
+    brandLink.href = "https://github.com/getlingoflow/lingoflow-youtube";
     brandLink.target = "_blank";
     brandLink.textContent = "LingoFlow";
     Object.assign(brandLink.style, {

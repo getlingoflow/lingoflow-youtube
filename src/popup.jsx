@@ -392,12 +392,12 @@ function App() {
             <div className="about-item">
               <span className="about-label">{i18n("website")}</span>
               <a 
-                href="https://getlingoflow.com/" 
+                href="https://github.com/getlingoflow/lingoflow-youtube" 
                 target="_blank" 
                 className="about-value"
                 style={{ color: "var(--primary-color, #4f8ef7)", textDecoration: "none", fontWeight: "600" }}
               >
-                getlingoflow.com
+                github.com/getlingoflow/lingoflow-youtube
               </a>
             </div>
             <div className="about-item">
