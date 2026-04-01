@@ -1,4 +1,4 @@
-export const APP_NAME = process.env.REACT_APP_NAME.trim()
+export const APP_NAME = (process.env.REACT_APP_NAME || "LingoFlow").trim()
   .split(/\s+/)
   .join("-");
 export const APP_LCNAME = APP_NAME.toLowerCase();
@@ -9,7 +9,7 @@ export const APP_CONSTS = {
   popupID: `${APP_LCNAME}-popup`,
 };
 
-export const APP_VERSION = process.env.REACT_APP_VERSION.split(".");
+export const APP_VERSION = (process.env.REACT_APP_VERSION || "1.0.0").split(".");
 
 export const THEME_LIGHT = "light";
 export const THEME_DARK = "dark";

@@ -1,8 +1,28 @@
 import { run } from "./common";
 
+console.log("[LingoFlow] content.js execution started");
+
 globalThis.__LINGOFLOW_CONTEXT__ = "content";
 
-run();
+const safeRun = async (retries = 3) => {
+  try {
+    console.log(`[LingoFlow] Attempting to run (retries left: ${retries})`);
+    await run();
+    console.log("[LingoFlow] run() successfully executed");
+  } catch (err) {
+    console.error("[LingoFlow] Fatal error during startup:", err);
+    if (retries > 0) {
+      console.log(`[LingoFlow] Retrying in 500ms...`);
+      setTimeout(() => safeRun(retries - 1), 500);
+    }
+  }
+};
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  safeRun();
+} else {
+  window.addEventListener('load', () => safeRun());
+}
 
 // 监听来自选项页面的消息，用于跳转到指定时间
 window.addEventListener("message", function(event) {

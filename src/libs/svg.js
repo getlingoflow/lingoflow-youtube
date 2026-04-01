@@ -86,11 +86,11 @@ export function createLogoSVG({
   const bgFill = isSelected ? secondaryColor : primaryColor;
   const fgFill = isSelected ? primaryColor : secondaryColor;
 
-  // 背景圆角矩形
+  // 背景容器
   const bg = createSVGElement("rect", {
     x: "0", y: "0", width: "32", height: "32",
     rx: "6", ry: "6",
-    fill: bgFill,
+    fill: "transparent",
   });
 
   // 上方气泡 (简单矩形 + 三角尾巴)

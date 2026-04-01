@@ -167,30 +167,13 @@ export const isMatch = (s, p) => {
     return false;
   }
 
-  p = "*" + p + "*";
-
-  let [sIndex, pIndex] = [0, 0];
-  let [sRecord, pRecord] = [-1, -1];
-  while (sIndex < s.length && pRecord < p.length) {
-    if (p[pIndex] === "*") {
-      pIndex++;
-      [sRecord, pRecord] = [sIndex, pIndex];
-    } else if (s[sIndex] === p[pIndex]) {
-      sIndex++;
-      pIndex++;
-    } else if (sRecord + 1 < s.length) {
-      sRecord++;
-      [sIndex, pIndex] = [sRecord, pRecord];
-    } else {
-      return false;
-    }
+  // 简单的包含判断，或者支持最基本的星号通配符
+  if (!p.includes("*")) {
+    return s.includes(p);
   }
 
-  if (p.length === pIndex) {
-    return true;
-  }
-
-  return isAllchar(p, "*", pIndex);
+  const regex = new RegExp(`^${p.replace(/\./g, "\\.").replace(/\*/g, ".*")}$`, "i");
+  return regex.test(s) || s.includes(p.replace(/\*/g, ""));
 };
 
 /**

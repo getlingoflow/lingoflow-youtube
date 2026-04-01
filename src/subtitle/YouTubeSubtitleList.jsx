@@ -198,7 +198,7 @@ export class YouTubeSubtitleList {
   _renderVocabulary() {
     if (!this.vocabularyListEl) return;
     const s = this._styles;
-    this.vocabularyListEl.innerHTML = "";
+    this.vocabularyListEl.replaceChildren();
 
     // 导出按钮栏
     const exportBar = document.createElement("div");
@@ -607,7 +607,9 @@ export class YouTubeSubtitleList {
         overflow: "hidden",
       });
 
-      const secondary = document.getElementById("secondary");
+      const secondary = document.getElementById("secondary") || 
+                        document.getElementById("secondary-inner") || 
+                        document.querySelector("#related");
       if (secondary) secondary.prepend(this.container);
 
       // 设置初始主题
@@ -617,7 +619,9 @@ export class YouTubeSubtitleList {
       this._observePlayerResize();
     }
 
-    this.container.innerHTML = "";
+    if (this.container) {
+      this.container.replaceChildren();
+    }
 
     // 拖拽手柄
     this.container.appendChild(this._createDragHandle());

@@ -7,8 +7,10 @@ import { logger } from "./libs/log.js";
  * 入口函数
  */
 export async function run() {
+  console.log("[LingoFlow] run() triggered");
   try {
     const setting = await getSettingWithDefault();
+    console.log("[LingoFlow] setting loaded", setting);
 
     logger.setLevel(setting.logLevel);
 

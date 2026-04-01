@@ -21,7 +21,7 @@ import { buildBilingualVtt } from "./vtt";
 import { putSetting } from "../libs/storage";
 
 const VIDEO_SELECT = "video.html5-main-video, #movie_player video, video";
-const CONTORLS_SELECT = ".ytp-right-controls";
+const CONTROLS_SELECT = ".ytp-right-controls";
 const YT_CAPTION_SELECT = "#ytp-caption-window-container";
 const YT_AD_SELECT = ".video-ads";
 const YT_SUBTITLE_BTN_SELECT = "button.ytp-subtitles-button";
@@ -96,22 +96,37 @@ class YouTubeCaptionProvider {
         action: MSG_MENUS_UPDATEFORM,
         data: { isAISegment: this.#setting.isAISegment },
       });
+
+      // 重新监听主控条，防止 SPA 导航导致按钮丢失
+      this.#waitForElement(CONTROLS_SELECT, (ytControls) => {
+        this.#injectToggleButton(ytControls);
+      });
     });
 
-    this.#waitForElement(CONTORLS_SELECT, (ytControls) => {
-      const ytSubtitleBtn = ytControls.querySelector(YT_SUBTITLE_BTN_SELECT);
-      if (ytSubtitleBtn) {
-        ytSubtitleBtn.addEventListener("click", () => {
-          if (ytSubtitleBtn.getAttribute("aria-pressed") === "true") {
-            this.#startManager();
-          } else {
-            this.#destroyManager();
-          }
-        });
+    // 定期检查并注入按钮，应对 YouTube 极速模式下极其复杂的 DOM 变动
+    setInterval(() => {
+      const { enabled = true } = this.#setting?.subtitleSetting || {};
+      if (!enabled) return;
+
+      const ytControls = document.querySelector(CONTROLS_SELECT) || 
+                         document.getElementById("movie_player")?.shadowRoot?.querySelector(CONTROLS_SELECT);
+      if (ytControls) {
+        this.#injectToggleButton(ytControls);
+        this.#attachNativeSubtitleListener(ytControls);
       }
+    }, 2000);
 
-      this.#injectToggleButton(ytControls);
-    });
+    const initialControls = document.querySelector(CONTROLS_SELECT) ||
+                            document.getElementById("movie_player")?.shadowRoot?.querySelector(CONTROLS_SELECT);
+    if (initialControls) {
+      this.#injectToggleButton(initialControls);
+      this.#attachNativeSubtitleListener(initialControls);
+    } else {
+      this.#waitForElement(CONTROLS_SELECT, (ytControls) => {
+        this.#injectToggleButton(ytControls);
+        this.#attachNativeSubtitleListener(ytControls);
+      });
+    }
 
     this.#waitForElement(YT_AD_SELECT, (adContainer) => {
       this.#moAds(adContainer);
@@ -245,14 +260,17 @@ class YouTubeCaptionProvider {
   }
 
   #waitForElement(selector, callback) {
-    const element = document.querySelector(selector);
+    const getTarget = () => document.querySelector(selector) || 
+                           document.getElementById("movie_player")?.shadowRoot?.querySelector(selector);
+    
+    const element = getTarget();
     if (element) {
       callback(element);
       return;
     }
 
     const observer = new MutationObserver((mutations, obs) => {
-      const targetNode = document.querySelector(selector);
+      const targetNode = getTarget();
       if (targetNode) {
         obs.disconnect();
         callback(targetNode);
@@ -324,12 +342,34 @@ class YouTubeCaptionProvider {
     );
   }
 
+  #attachNativeSubtitleListener(ytControls) {
+    if (!ytControls) return;
+    const ytSubtitleBtn = ytControls.querySelector(YT_SUBTITLE_BTN_SELECT);
+    if (ytSubtitleBtn && !ytSubtitleBtn.__LINGOFLOW_ATTACHED__) {
+      ytSubtitleBtn.__LINGOFLOW_ATTACHED__ = true;
+      ytSubtitleBtn.addEventListener("click", () => {
+        if (ytSubtitleBtn.getAttribute("aria-pressed") === "true") {
+          this.#startManager();
+        } else {
+          this.#destroyManager();
+        }
+      });
+    }
+  }
+
   #injectToggleButton(ytControls) {
+    if (ytControls?.querySelector(".lingoflow-subtitle-controls")) {
+      return;
+    }
     const lingoflowControls = document.createElement("div");
     lingoflowControls.className = "notranslate lingoflow-subtitle-controls";
     Object.assign(lingoflowControls.style, {
-      height: "100%",
+      display: "inline-block",
+      verticalAlign: "top",
       position: "relative",
+      height: "100%",
+      minWidth: "48px",
+      zIndex: "2147483647",
     });
 
     const toggleButton = document.createElement("button");
@@ -380,7 +420,15 @@ class YouTubeCaptionProvider {
     };
     this.#toggleButton = toggleButton;
 
-    ytControls?.prepend(lingoflowControls);
+    // 用 before() 插入到 CC 按钮前面，避免 insertBefore 的亲子节点限制
+    const subBtn = ytControls?.querySelector(YT_SUBTITLE_BTN_SELECT);
+    if (subBtn) {
+      console.log("[LingoFlow] injecting before CC button via .before()");
+      subBtn.before(lingoflowControls);
+    } else {
+      console.log("[LingoFlow] CC button not found, appending to ytControls.");
+      ytControls?.appendChild(lingoflowControls);
+    }
   }
 
   #isSameLang(lang1, lang2) {
