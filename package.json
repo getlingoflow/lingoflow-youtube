@@ -12,6 +12,11 @@
   },
   "author": "Norman",
   "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/getlingoflow/lingoflow-youtube.git"
+  },
+  "homepage": "https://github.com/getlingoflow/lingoflow-youtube",
   "dependencies": {
     "@emotion/cache": "^11.14.0",
     "@emotion/css": "^11.13.5",
