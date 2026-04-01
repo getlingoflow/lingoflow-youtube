@@ -21,14 +21,14 @@ export class YouTubeSubtitleList {
     this._isDragging = false;
     this._dragStartY = 0;
     this._dragStartHeight = 0;
-    
+
     this._theme = this._detectTheme();
 
     this.activeTab = "subtitles";
 
     this.handleWordAdded = this.handleWordAdded.bind(this);
     document.addEventListener("lingoflow-add-word", this.handleWordAdded);
-    
+
     window.addEventListener("message", (event) => {
       if (event.data && event.data.type === "LINGOFLOW_TRANSLATOR_JUMP_TO_TIME") {
         if (this.videoEl) {
@@ -44,9 +44,9 @@ export class YouTubeSubtitleList {
   handleWordAdded(event) {
     if (event.detail && event.detail.word) {
       this.addWord(
-        event.detail.word, 
-        event.detail.phonetic || "", 
-        event.detail.definition || "", 
+        event.detail.word,
+        event.detail.phonetic || "",
+        event.detail.definition || "",
         event.detail.examples || [],
         event.detail.timestamp || null
       );
@@ -72,8 +72,8 @@ export class YouTubeSubtitleList {
   }
 
   _detectTheme() {
-    return document.documentElement.hasAttribute('dark') || 
-           window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return document.documentElement.hasAttribute('dark') ||
+      window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   // ==================== 样式常量 ====================
@@ -91,19 +91,22 @@ export class YouTubeSubtitleList {
       textZhActive: 'var(--lingoflow-text-zh-active)',
       textTime: 'var(--lingoflow-text-time)',
       textTimeActive: 'var(--lingoflow-text-time-active)',
+      textSecondary: 'var(--lingoflow-text-secondary)',
+      textMuted: 'var(--lingoflow-text-muted)',
       divider: 'var(--lingoflow-divider)',
       tabBorder: 'var(--lingoflow-tab-border)',
       btnBg: 'var(--lingoflow-btn-bg)',
       dragHandle: 'var(--lingoflow-drag-handle)',
+      primaryBorder: 'var(--lingoflow-primary)',
     };
   }
 
   // ==================== 获取视频播放器高度 ====================
   _getVideoPlayerHeight() {
     try {
-      const player = document.getElementById('movie_player') || 
-                     this.videoEl?.closest('#movie_player') ||
-                     this.videoEl?.closest('.html5-video-player');
+      const player = document.getElementById('movie_player') ||
+        this.videoEl?.closest('#movie_player') ||
+        this.videoEl?.closest('.html5-video-player');
       if (player) return player.offsetHeight;
       if (this.videoEl) return this.videoEl.offsetHeight;
       return 500;
@@ -404,8 +407,8 @@ export class YouTubeSubtitleList {
       vocabulary: processed
     };
     this._downloadFile(
-      JSON.stringify(data, null, 2), 
-      'application/json', 
+      JSON.stringify(data, null, 2),
+      'application/json',
       `lingoflow-vocab-${new Date().toISOString().slice(0, 10)}.json`
     );
   }
@@ -607,9 +610,9 @@ export class YouTubeSubtitleList {
         overflow: "hidden",
       });
 
-      const secondary = document.getElementById("secondary") || 
-                        document.getElementById("secondary-inner") || 
-                        document.querySelector("#related");
+      const secondary = document.getElementById("secondary") ||
+        document.getElementById("secondary-inner") ||
+        document.querySelector("#related");
       if (secondary) secondary.prepend(this.container);
 
       // 设置初始主题
@@ -633,8 +636,10 @@ export class YouTubeSubtitleList {
       justifyContent: "space-between",
       alignItems: "center",
       borderBottom: `1px solid ${s.tabBorder}`,
+      background: "rgba(255, 255, 255, 0.02)",
       flexShrink: "0",
-      paddingRight: "8px",
+      paddingRight: "10px",
+      paddingLeft: "4px",
     });
 
     const tabButtons = document.createElement("div");
@@ -642,7 +647,7 @@ export class YouTubeSubtitleList {
 
     const subtitleTab = this._createTab("Subtitles", "subtitles");
     const vocabularyTab = this._createTab("Vocabulary", "vocabulary");
-    
+
     tabButtons.appendChild(subtitleTab);
     tabButtons.appendChild(vocabularyTab);
 
@@ -684,7 +689,7 @@ export class YouTubeSubtitleList {
       padding: "0",
       margin: "0",
     });
-    
+
     themeToggle.addEventListener('mouseenter', () => {
       themeToggle.style.backgroundColor = s.bgHover;
       themeToggle.style.transform = "scale(1.1)";
@@ -693,7 +698,7 @@ export class YouTubeSubtitleList {
       themeToggle.style.backgroundColor = "transparent";
       themeToggle.style.transform = "scale(1)";
     });
-    
+
     themeToggle.addEventListener('click', () => {
       this._theme = this._theme === 'dark' ? 'light' : 'dark';
       this.container.setAttribute('data-theme', this._theme);
@@ -713,7 +718,7 @@ export class YouTubeSubtitleList {
       letterSpacing: "0.5px",
       marginLeft: "auto",
       marginRight: "12px",
-      opacity: "0.7",
+      opacity: "0.9",
       transition: "all 0.2s ease",
       fontFamily: "inherit",
     });
@@ -840,9 +845,9 @@ export class YouTubeSubtitleList {
       }
       Object.assign(textSpan.style, {
         color: s.textEn,
-        fontSize: "16px",
+        fontSize: "16.5px",
         lineHeight: "1.5",
-        fontWeight: "400",
+        fontWeight: "500",
         wordBreak: "break-word",
       });
 
@@ -856,9 +861,10 @@ export class YouTubeSubtitleList {
       }
       Object.assign(translationEl.style, {
         color: s.textZh,
-        fontSize: "14.5px",
+        fontSize: "15px",
         lineHeight: "1.5",
-        marginTop: "4px",
+        marginTop: "5px",
+        fontWeight: "400",
         wordBreak: "break-word",
       });
 
@@ -908,21 +914,21 @@ export class YouTubeSubtitleList {
       border: "none",
       background: "transparent",
       fontSize: "15px",
-      fontWeight: isActive ? '600' : '500',
-      color: isActive ? s.primary : s.textZh,
+      fontWeight: isActive ? '600' : '600',
+      color: isActive ? s.primary : s.textSecondary,
       borderBottom: `2px solid ${isActive ? s.primary : 'transparent'}`,
       marginBottom: "-1px",
       transition: "all 0.15s",
       fontFamily: "inherit",
       letterSpacing: "0.3px",
-      opacity: isActive ? '1' : '0.6',
+      opacity: isActive ? '1' : '0.85',
     });
   }
 
   _observePlayerResize() {
     try {
-      const player = document.getElementById('movie_player') || 
-                     this.videoEl?.closest('#movie_player');
+      const player = document.getElementById('movie_player') ||
+        this.videoEl?.closest('#movie_player');
       if (player && typeof ResizeObserver !== 'undefined') {
         this._resizeObserver = new ResizeObserver(() => {
           if (!this._isDragging) {
@@ -942,54 +948,78 @@ export class YouTubeSubtitleList {
     const style = document.createElement("style");
     style.id = styleId;
     style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
       #lingoflow-youtube-subtitle-list-container {
-        --lingoflow-primary: #4f8ef7;
-        --lingoflow-primary-subtle: rgba(79, 142, 247, 0.1);
+        --lingoflow-primary: #3b82f6;
+        --lingoflow-primary-subtle: rgba(59, 130, 246, 0.1);
+        transition: background-color 0.3s ease, border-color 0.3s ease;
       }
       #lingoflow-youtube-subtitle-list-container[data-theme='dark'] {
-        --lingoflow-bg: #0f0f11;
-        --lingoflow-bg-card: #0f0f11;
-        --lingoflow-bg-hover: rgba(255, 255, 255, 0.03);
-        --lingoflow-bg-active: rgba(79, 142, 247, 0.1);
-        --lingoflow-text-en: rgba(255, 255, 255, 0.78);
-        --lingoflow-text-en-active: rgba(255, 255, 255, 0.96);
-        --lingoflow-text-zh: rgba(255, 255, 255, 0.58);
-        --lingoflow-text-zh-active: rgba(255, 255, 255, 0.75);
-        --lingoflow-text-time: rgba(255, 255, 255, 0.28);
-        --lingoflow-text-time-active: #4f8ef7;
-        --lingoflow-divider: rgba(255, 255, 255, 0.05);
-        --lingoflow-tab-border: rgba(255, 255, 255, 0.08);
-        --lingoflow-btn-bg: rgba(255, 255, 255, 0.05);
-        --lingoflow-drag-handle: rgba(255, 255, 255, 0.1);
+        --lingoflow-bg: #111114;
+        --lingoflow-bg-card: #111114;
+        --lingoflow-bg-hover: rgba(255, 255, 255, 0.05);
+        --lingoflow-bg-active: rgba(59, 130, 246, 0.15);
+        --lingoflow-text-en: #ffffff;
+        --lingoflow-text-en-active: #ffffff;
+        --lingoflow-text-zh: #d1d5db;
+        --lingoflow-text-zh-active: #ffffff;
+        --lingoflow-text-secondary: #e5e7eb;
+        --lingoflow-text-muted: #9ca3af;
+        --lingoflow-text-time: #9ca3af;
+        --lingoflow-text-time-active: #60a5fa;
+        --lingoflow-divider: rgba(255, 255, 255, 0.08);
+        --lingoflow-tab-border: rgba(255, 255, 255, 0.12);
+        --lingoflow-btn-bg: rgba(255, 255, 255, 0.1);
+        --lingoflow-drag-handle: rgba(255, 255, 255, 0.2);
       }
       #lingoflow-youtube-subtitle-list-container[data-theme='light'] {
         --lingoflow-bg: #ffffff;
         --lingoflow-bg-card: #ffffff;
         --lingoflow-bg-hover: rgba(0, 0, 0, 0.03);
-        --lingoflow-bg-active: rgba(79, 142, 247, 0.08);
-        --lingoflow-text-en: rgba(0, 0, 0, 0.85);
-        --lingoflow-text-en-active: rgba(0, 0, 0, 1);
-        --lingoflow-text-zh: rgba(0, 0, 0, 0.65);
-        --lingoflow-text-zh-active: rgba(0, 0, 0, 0.85);
-        --lingoflow-text-time: rgba(0, 0, 0, 0.35);
-        --lingoflow-text-time-active: #4f8ef7;
+        --lingoflow-bg-active: rgba(59, 130, 246, 0.08);
+        --lingoflow-text-en: #18181b;
+        --lingoflow-text-en-active: #000000;
+        --lingoflow-text-zh: #52525b;
+        --lingoflow-text-zh-active: #18181b;
+        --lingoflow-text-secondary: #3f3f46;
+        --lingoflow-text-muted: #71717a;
+        --lingoflow-text-time: #a1a1aa;
+        --lingoflow-text-time-active: #3b82f6;
         --lingoflow-divider: rgba(0, 0, 0, 0.06);
         --lingoflow-tab-border: rgba(0, 0, 0, 0.08);
         --lingoflow-btn-bg: rgba(0, 0, 0, 0.04);
-        --lingoflow-drag-handle: rgba(0, 0, 0, 0.08);
+        --lingoflow-drag-handle: rgba(0, 0, 0, 0.1);
+      }
+      .lingoflow-youtube-item {
+        border-left: 3px solid transparent !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative;
+      }
+      .lingoflow-active {
+        background-color: var(--lingoflow-bg-active) !important;
+        border-left-color: var(--lingoflow-primary) !important;
+      }
+      #lingoflow-youtube-subtitle-list-container[data-theme='dark'] .lingoflow-active {
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.03) 100%) !important;
+      }
+      #lingoflow-youtube-subtitle-list-container[data-theme='light'] .lingoflow-active {
+        background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%) !important;
       }
       #lingoflow-youtube-subtitle-list-container *::-webkit-scrollbar {
-        width: 4px;
+        width: 6px;
       }
       #lingoflow-youtube-subtitle-list-container *::-webkit-scrollbar-track {
         background: transparent;
       }
       #lingoflow-youtube-subtitle-list-container *::-webkit-scrollbar-thumb {
         background: var(--lingoflow-drag-handle);
-        border-radius: 4px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
       #lingoflow-youtube-subtitle-list-container *::-webkit-scrollbar-thumb:hover {
-        background: var(--lingoflow-text-time);
+        background: var(--lingoflow-text-muted);
+        background-clip: padding-box;
       }
     `;
     document.head.appendChild(style);
@@ -1052,16 +1082,16 @@ export class YouTubeSubtitleList {
           el.classList.remove("lingoflow-active");
           el.style.backgroundColor = "transparent";
           el.style.borderLeftColor = "transparent";
-          
+
           const time = el.querySelector(".lingoflow-time-badge");
           if (time) time.style.color = s.textTime;
-          
+
           const original = el.querySelector(".lingoflow-youtube-original");
           if (original) {
             original.style.color = s.textEn;
-            original.style.fontWeight = "400";
+            original.style.fontWeight = "500";
           }
-          
+
           const trans = el.querySelector(".lingoflow-youtube-translation");
           if (trans) trans.style.color = s.textZh;
         });
@@ -1074,13 +1104,13 @@ export class YouTubeSubtitleList {
 
           const time = liElement.querySelector(".lingoflow-time-badge");
           if (time) time.style.color = s.textTimeActive;
-          
+
           const original = liElement.querySelector(".lingoflow-youtube-original");
           if (original) {
             original.style.color = s.textEnActive;
-            original.style.fontWeight = "500";
+            original.style.fontWeight = "600";
           }
-          
+
           const trans = liElement.querySelector(".lingoflow-youtube-translation");
           if (trans) trans.style.color = s.textZhActive;
 
