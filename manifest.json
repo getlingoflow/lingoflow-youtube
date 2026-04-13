@@ -19,7 +19,7 @@
   "web_accessible_resources": [
     {
       "resources": ["src/injector-subtitle.js"],
-      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
+      "matches": ["<all_urls>"]
     },
     {
       "resources": ["src/injector-shadowroot.js"],

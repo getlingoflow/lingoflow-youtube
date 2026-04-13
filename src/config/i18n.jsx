@@ -2528,6 +2528,13 @@ export const I18N = {
     ja: `検出結果`,
     ko: `감지 결과`,
   },
+  subtitle_track: {
+    zh: `字幕轨道`,
+    en: `Subtitle Track`,
+    zh_TW: `字幕軌道`,
+    ja: `字幕トラック`,
+    ko: `자막 트랙`,
+  },
   subtitle_translate: {
     zh: `字幕翻译`,
     en: `Subtitle Translation`,

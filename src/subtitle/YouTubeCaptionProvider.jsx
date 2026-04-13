@@ -44,6 +44,9 @@ class YouTubeCaptionProvider {
   #i18n = () => "";
   #menuEventName = "lingoflow-event";
   
+  // 新增：可用字幕轨道列表
+  #captionTracks = [];
+  
   // 新增：字幕列表管理器实例
   #subtitleListManager = null;
 
@@ -302,12 +305,85 @@ class YouTubeCaptionProvider {
       }
     });
 
+    if (name === "currentTrackUrl") {
+      this.#switchTrack(value);
+      return;
+    }
+
     if (name === "isBilingual") {
       this.#managerInstance?.updateSetting({ [name]: value });
     } else if (name === "isAISegment") {
       this.#reProcessEvents();
     } else if (name === "showOrigin") {
       this.#toggleShowOrigin();
+    }
+  }
+
+  async #switchTrack(baseUrl) {
+    const videoId = this.#videoId;
+    if (!videoId || !baseUrl) return;
+
+    logger.info("Youtube Provider: Switching track to", baseUrl);
+
+    try {
+      this.#destroyManager();
+      this.#subtitles = [];
+      this.#flatEvents = [];
+      this.#progressed = 0;
+
+      const trackUrl = new URL(baseUrl);
+      trackUrl.searchParams.set("fmt", "json3");
+      
+      const res = await fetch(trackUrl.href);
+      const json = await res.json();
+      const events = json?.events;
+
+      if (!events?.length) {
+        logger.warn("Youtube Provider: Failed to fetch switched track events");
+        return;
+      }
+
+      const lang = trackUrl.searchParams.get("lang");
+      const fromLang = this.#getFromLang(lang);
+      const toLang = this.#setting.toLang;
+
+      if (this.#isSameLang(fromLang, toLang)) {
+        logger.debug("Youtube Provider: skip same lang", fromLang, toLang);
+        return;
+      }
+
+      const flatEvents = this.#genFlatEvents(events);
+      if (!flatEvents?.length) return;
+
+      this.#flatEvents = flatEvents;
+      this.#fromLang = fromLang;
+
+      if (this.#subtitleListManager) {
+        this.#subtitleListManager.initialize(events);
+      }
+
+      // 更新菜单中的选中状态
+      if (this.#captionTracks) {
+        const trackData = this.#captionTracks.map(t => ({
+          label: t.name?.simpleText || t.languageCode,
+          value: t.baseUrl,
+          languageCode: t.languageCode,
+          kind: t.kind,
+          isSelected: t.baseUrl === baseUrl
+        }));
+        this.#sendMenusMsg({
+          action: MSG_MENUS_UPDATEFORM,
+          data: { captionTracks: trackData },
+        });
+      }
+
+      this.#processEvents({
+        videoId,
+        flatEvents,
+        fromLang,
+      });
+    } catch (err) {
+      logger.error("Youtube Provider: switch track failed", err);
     }
   }
 
@@ -441,25 +517,34 @@ class YouTubeCaptionProvider {
       return null;
     }
 
-    let captionTrack = null;
+    // 1. 优先寻找非 ASR 的英文
+    const enTrack = captionTracks.find(item => 
+      (item.languageCode === 'en' || item.languageCode?.startsWith('en-')) && 
+      item.kind !== "asr"
+    );
+    if (enTrack) return enTrack;
 
+    // 2. 其次寻找 ASR 的英文
+    const enAsrTrack = captionTracks.find(item => 
+      (item.languageCode === 'en' || item.languageCode?.startsWith('en-')) && 
+      item.kind === "asr"
+    );
+    if (enAsrTrack) return enAsrTrack;
+
+    // 3. 原有逻辑：找与当前 ASR 语言一致的非 ASR 轨道
     const asrTrack = captionTracks.find((item) => item.kind === "asr");
     if (asrTrack) {
-      captionTrack = captionTracks.find(
+      const matchingTrack = captionTracks.find(
         (item) =>
           item.kind !== "asr" &&
           this.#isSameLang(item.languageCode, asrTrack.languageCode)
       );
-      if (!captionTrack) {
-        captionTrack = asrTrack;
-      }
+      if (matchingTrack) return matchingTrack;
+      return asrTrack;
     }
 
-    if (!captionTrack) {
-      captionTrack = captionTracks.pop();
-    }
-
-    return captionTrack;
+    // 4. 最后回退到第一个
+    return captionTracks[0];
   }
 
   async #getCaptionTracks(videoId) {
@@ -587,11 +672,25 @@ class YouTubeCaptionProvider {
 
     try {
 
-      const { toLang } = this.#setting;
       let captionTrack = null;
       try {
-        const captionTracks = await this.#getCaptionTracks(videoId);
-        captionTrack = this.#findCaptionTrack(captionTracks);
+        this.#captionTracks = await this.#getCaptionTracks(videoId);
+        captionTrack = this.#findCaptionTrack(this.#captionTracks);
+        
+        // 发送字幕轨道列表给菜单
+        if (this.#captionTracks?.length) {
+          const trackData = this.#captionTracks.map(t => ({
+            label: t.name?.simpleText || t.languageCode,
+            value: t.baseUrl,
+            languageCode: t.languageCode,
+            kind: t.kind,
+            isSelected: t.baseUrl === captionTrack?.baseUrl
+          }));
+          this.#sendMenusMsg({
+            action: MSG_MENUS_UPDATEFORM,
+            data: { captionTracks: trackData },
+          });
+        }
       } catch (err) {
         logger.debug("Youtube Provider: Failed to get captionTracks, trying fallback...", err);
       }
@@ -609,6 +708,7 @@ class YouTubeCaptionProvider {
 
       const lang = potUrl.searchParams.get("lang");
       const fromLang = this.#getFromLang(lang);
+      const toLang = this.#setting.toLang;
 
       logger.debug(
         `Youtube Provider: lang: ${lang}, fromLang: ${fromLang}, toLang: ${toLang}`

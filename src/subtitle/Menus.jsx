@@ -164,6 +164,34 @@ export function Menus({
         value={skipAd}
         label={i18n("is_skip_ad")}
       />
+      {formData.captionTracks?.length > 0 && (
+        <div style={{ padding: "0 8px", marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: "20px" }}>
+            {i18n("subtitle_track")}
+          </div>
+          <select
+            style={{
+              width: "100%",
+              background: "rgba(255,255,255,0.1)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              padding: "4px",
+              fontSize: 14,
+              cursor: "pointer",
+              outline: "none"
+            }}
+            onChange={(e) => handleChange({ name: "currentTrackUrl", value: e.target.value })}
+            value={formData.captionTracks.find(t => t.isSelected)?.value || ""}
+          >
+            {formData.captionTracks.map((track, index) => (
+              <option key={index} value={track.value} style={{ background: "#333" }}>
+                {track.label} {track.kind === 'asr' ? '(auto)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {progressed === 100 && (
         <Button
           label={i18n("download_subtitles")}
